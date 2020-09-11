@@ -2,7 +2,7 @@
 Since gnuradio relies on SDL (version 1) the video sink of gnuradio does not work on macOS Mojave and Catalina.
 This is a simple workaround to have a video sink working on macOS > 10.14. with SDL2.
 
-# Usage:
+## Usage:
 First, create a named pipe:
 
 `mkfifo /Users/<name>/stdout`

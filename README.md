@@ -7,9 +7,12 @@ First, create a named pipe:
 
 `mkfifo /Users/<name>/stdout`
 
-Open SDL-Display:
+Compile and open SDL-Display:
 
-`./SDLDisplay -i /Users/kesenheimer/stdout -h 600 -w 800`
+```
+make
+./SDLDisplay -i /Users/kesenheimer/stdout -h 600 -w 800
+```
 
 Use the file sink of gnuradio to write to the named pipe.
 File sink properties:

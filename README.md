@@ -7,7 +7,7 @@ First, create a named pipe:
 
 `mkfifo /Users/<name>/stdout`
 
-Compile and open SDL-Display:
+Compile and open SDLDisplay:
 
 ```
 make

@@ -11,8 +11,8 @@ Open SDL-Display:
 
 `./SDLDisplay -i /Users/kesenheimer/stdout -h 600 -w 800`
 
-Use the file sink of gnu-radio to write to the named pipe.
-File Sink properties:
+Use the file sink of gnuradio to write to the named pipe.
+File sink properties:
 
 ```
 File: /Users/<name>/stdout

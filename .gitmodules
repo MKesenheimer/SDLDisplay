@@ -1,0 +1,3 @@
+[submodule "SDLTools"]
+	path = SDLTools
+	url = https://github.com/MKesenheimer/SDLTools.git

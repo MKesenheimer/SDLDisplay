@@ -11,7 +11,7 @@ Compile and open SDLDisplay:
 
 ```
 make
-./SDLDisplay -i /Users/kesenheimer/stdout -h 600 -w 800
+./SDLDisplay -i /Users/kesenheimer/stdout -h 512 -w 512
 ```
 
 Use the file sink of gnuradio to write to the named pipe.

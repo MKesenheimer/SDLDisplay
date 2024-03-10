@@ -42,7 +42,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [159, 42]
+    coordinate: [128, 40.0]
     rotation: 0
     state: enabled
 - name: analog_random_source_x_0
@@ -64,6 +64,29 @@ blocks:
     bus_structure: null
     coordinate: [40, 168.0]
     rotation: 0
+    state: disabled
+- name: analog_sig_source_x_0
+  id: analog_sig_source_x
+  parameters:
+    affinity: ''
+    alias: ''
+    amp: '1'
+    comment: ''
+    freq: update_rate*periods_per_row*num_rows
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    offset: '1'
+    phase: '0'
+    samp_rate: update_rate*vector_length*num_rows
+    showports: 'False'
+    type: float
+    waveform: analog.GR_COS_WAVE
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [64, 356.0]
+    rotation: 0
     state: enabled
 - name: blocks_file_sink_0
   id: blocks_file_sink
@@ -80,7 +103,24 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [400, 252.0]
+    coordinate: [336, 172.0]
+    rotation: 0
+    state: enabled
+- name: blocks_float_to_short_0
+  id: blocks_float_to_short
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    scale: 2**6
+    vlen: '1'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [216, 380.0]
     rotation: 0
     state: enabled
 - name: blocks_throttle2_0
@@ -90,45 +130,94 @@ blocks:
     alias: ''
     comment: ''
     ignoretag: 'True'
-    limit: auto
-    maximum: '0.1'
+    limit: time
+    maximum: 0.25/update_rate
     maxoutbuf: '0'
     minoutbuf: '0'
-    samples_per_second: samp_rate
+    samples_per_second: update_rate*vector_length*num_rows
     type: short
     vlen: '1'
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [184, 176.0]
+    coordinate: [192, 172.0]
     rotation: 0
-    state: true
-- name: video_sdl_sink_0
-  id: video_sdl_sink
+    state: enabled
+- name: num_rows
+  id: parameter
   parameters:
-    affinity: ''
     alias: ''
     comment: ''
-    display_height: '300'
-    display_width: '400'
-    fps: '0'
-    height: '480'
-    num_channels: '1'
-    type: short
-    width: '640'
+    hide: none
+    label: Number of Rows
+    short_id: n
+    type: intx
+    value: '512'
   states:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [400, 160.0]
+    coordinate: [432, 40.0]
     rotation: 0
-    state: disabled
+    state: enabled
+- name: periods_per_row
+  id: parameter
+  parameters:
+    alias: ''
+    comment: ''
+    hide: none
+    label: Periods per Row
+    short_id: p
+    type: eng_float
+    value: 1-1/255
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [536, 40.0]
+    rotation: 0
+    state: enabled
+- name: update_rate
+  id: parameter
+  parameters:
+    alias: ''
+    comment: ''
+    hide: none
+    label: Update Rate
+    short_id: r
+    type: intx
+    value: '25'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [336, 40.0]
+    rotation: 0
+    state: enabled
+- name: vector_length
+  id: parameter
+  parameters:
+    alias: ''
+    comment: ''
+    hide: none
+    label: Vector Length
+    short_id: l
+    type: intx
+    value: '512'
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [240, 40.0]
+    rotation: 0
+    state: enabled
 
 connections:
 - [analog_random_source_x_0, '0', blocks_throttle2_0, '0']
+- [analog_sig_source_x_0, '0', blocks_float_to_short_0, '0']
+- [blocks_float_to_short_0, '0', blocks_throttle2_0, '0']
 - [blocks_throttle2_0, '0', blocks_file_sink_0, '0']
-- [blocks_throttle2_0, '0', video_sdl_sink_0, '0']
 
 metadata:
   file_format: 1

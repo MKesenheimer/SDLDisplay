@@ -11,8 +11,8 @@
 
 from PyQt5 import Qt
 from gnuradio import qtgui
+from gnuradio import analog
 from gnuradio import blocks
-import numpy
 from gnuradio import gr
 from gnuradio.filter import firdes
 from gnuradio.fft import window
@@ -27,7 +27,7 @@ from gnuradio import eng_notation
 
 class video_sdl_test(gr.top_block, Qt.QWidget):
 
-    def __init__(self):
+    def __init__(self, num_rows=512, periods_per_row=(1-1/255), update_rate=25, vector_length=512):
         gr.top_block.__init__(self, "Not titled yet", catch_exceptions=True)
         Qt.QWidget.__init__(self)
         self.setWindowTitle("Not titled yet")
@@ -58,6 +58,14 @@ class video_sdl_test(gr.top_block, Qt.QWidget):
             print(f"Qt GUI: Could not restore geometry: {str(exc)}", file=sys.stderr)
 
         ##################################################
+        # Parameters
+        ##################################################
+        self.num_rows = num_rows
+        self.periods_per_row = periods_per_row
+        self.update_rate = update_rate
+        self.vector_length = vector_length
+
+        ##################################################
         # Variables
         ##################################################
         self.samp_rate = samp_rate = 9216000
@@ -66,16 +74,18 @@ class video_sdl_test(gr.top_block, Qt.QWidget):
         # Blocks
         ##################################################
 
-        self.blocks_throttle2_0 = blocks.throttle( gr.sizeof_short*1, samp_rate, True, 0 if "auto" == "auto" else max( int(float(0.1) * samp_rate) if "auto" == "time" else int(0.1), 1) )
+        self.blocks_throttle2_0 = blocks.throttle( gr.sizeof_short*1, (update_rate*vector_length*num_rows), True, 0 if "time" == "auto" else max( int(float((0.25/update_rate)) * (update_rate*vector_length*num_rows)) if "time" == "time" else int((0.25/update_rate)), 1) )
+        self.blocks_float_to_short_0 = blocks.float_to_short(1, (2**6))
         self.blocks_file_sink_0 = blocks.file_sink(gr.sizeof_short*1, '/Users/kesenheimer/stdout', True)
         self.blocks_file_sink_0.set_unbuffered(True)
-        self.analog_random_source_x_0 = blocks.vector_source_s(list(map(int, numpy.random.randint(0, 255, 1000))), True)
+        self.analog_sig_source_x_0 = analog.sig_source_f((update_rate*vector_length*num_rows), analog.GR_COS_WAVE, (update_rate*periods_per_row*num_rows), 1, 1, 0)
 
 
         ##################################################
         # Connections
         ##################################################
-        self.connect((self.analog_random_source_x_0, 0), (self.blocks_throttle2_0, 0))
+        self.connect((self.analog_sig_source_x_0, 0), (self.blocks_float_to_short_0, 0))
+        self.connect((self.blocks_float_to_short_0, 0), (self.blocks_throttle2_0, 0))
         self.connect((self.blocks_throttle2_0, 0), (self.blocks_file_sink_0, 0))
 
 
@@ -87,23 +97,73 @@ class video_sdl_test(gr.top_block, Qt.QWidget):
 
         event.accept()
 
+    def get_num_rows(self):
+        return self.num_rows
+
+    def set_num_rows(self, num_rows):
+        self.num_rows = num_rows
+        self.analog_sig_source_x_0.set_sampling_freq((self.update_rate*self.vector_length*self.num_rows))
+        self.analog_sig_source_x_0.set_frequency((self.update_rate*self.periods_per_row*self.num_rows))
+        self.blocks_throttle2_0.set_sample_rate((self.update_rate*self.vector_length*self.num_rows))
+
+    def get_periods_per_row(self):
+        return self.periods_per_row
+
+    def set_periods_per_row(self, periods_per_row):
+        self.periods_per_row = periods_per_row
+        self.analog_sig_source_x_0.set_frequency((self.update_rate*self.periods_per_row*self.num_rows))
+
+    def get_update_rate(self):
+        return self.update_rate
+
+    def set_update_rate(self, update_rate):
+        self.update_rate = update_rate
+        self.analog_sig_source_x_0.set_sampling_freq((self.update_rate*self.vector_length*self.num_rows))
+        self.analog_sig_source_x_0.set_frequency((self.update_rate*self.periods_per_row*self.num_rows))
+        self.blocks_throttle2_0.set_sample_rate((self.update_rate*self.vector_length*self.num_rows))
+
+    def get_vector_length(self):
+        return self.vector_length
+
+    def set_vector_length(self, vector_length):
+        self.vector_length = vector_length
+        self.analog_sig_source_x_0.set_sampling_freq((self.update_rate*self.vector_length*self.num_rows))
+        self.blocks_throttle2_0.set_sample_rate((self.update_rate*self.vector_length*self.num_rows))
+
     def get_samp_rate(self):
         return self.samp_rate
 
     def set_samp_rate(self, samp_rate):
         self.samp_rate = samp_rate
-        self.blocks_throttle2_0.set_sample_rate(self.samp_rate)
 
 
+
+def argument_parser():
+    parser = ArgumentParser()
+    parser.add_argument(
+        "-n", "--num-rows", dest="num_rows", type=intx, default=512,
+        help="Set Number of Rows [default=%(default)r]")
+    parser.add_argument(
+        "-p", "--periods-per-row", dest="periods_per_row", type=eng_float, default=eng_notation.num_to_str(float((1-1/255))),
+        help="Set Periods per Row [default=%(default)r]")
+    parser.add_argument(
+        "-r", "--update-rate", dest="update_rate", type=intx, default=25,
+        help="Set Update Rate [default=%(default)r]")
+    parser.add_argument(
+        "-l", "--vector-length", dest="vector_length", type=intx, default=512,
+        help="Set Vector Length [default=%(default)r]")
+    return parser
 
 
 def main(top_block_cls=video_sdl_test, options=None):
+    if options is None:
+        options = argument_parser().parse_args()
     if gr.enable_realtime_scheduling() != gr.RT_OK:
         gr.logger("realtime").warning("Error: failed to enable real-time scheduling.")
 
     qapp = Qt.QApplication(sys.argv)
 
-    tb = top_block_cls()
+    tb = top_block_cls(num_rows=options.num_rows, periods_per_row=options.periods_per_row, update_rate=options.update_rate, vector_length=options.vector_length)
 
     tb.start()
 
